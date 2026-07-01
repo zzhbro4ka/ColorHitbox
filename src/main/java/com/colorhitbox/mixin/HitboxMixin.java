@@ -30,7 +30,7 @@ public class HitboxMixin {
 
         MultiBufferSource.BufferSource buf = mc.renderBuffers().bufferSource();
         PoseStack ps = new PoseStack();
-        Vec3 cam = mc.gameRenderer.getCamera().getPosition();
+        Vec3 cam = mc.getEntityRenderDispatcher().camera.getPosition();
 
         for (Player player : mc.level.players()) {
             if (player == mc.player) continue;
@@ -40,7 +40,7 @@ public class HitboxMixin {
             float dx = (float)(box.maxX - box.minX);
             float dy = (float)(box.maxY - box.minY);
             float dz = (float)(box.maxZ - box.minZ);
-            ShapeRenderer.renderBox(ps, buf.getBuffer(ShapeRenderer.LINES),
+            ShapeRenderer.renderBox(ps, buf.getBuffer(ShapeRenderer.BOX),
                 0, 0, 0, dx, dy, dz, r, g, b, 1f);
             ps.popPose();
         }
