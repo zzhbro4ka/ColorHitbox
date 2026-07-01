@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "name": "ColorHitbox",
   "environment": "client",
-  "entrypoints": {
+  "entrypoints": { ["mixins.colorhitbox.json"]
     "client": ["com.colorhitbox.client.ColorHitboxClient"]
   },
   "depends": {
