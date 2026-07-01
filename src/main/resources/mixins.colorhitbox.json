@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "com.colorhitbox.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["HitboxMixin"],
+  "injectors": {"defaultRequire": 1}
+}
