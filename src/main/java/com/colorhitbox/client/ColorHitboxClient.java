@@ -4,40 +4,42 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.Box;
-import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.MultiBufferSource;
 import com.mojang.blaze3d.vertex.PoseStack;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import com.mojang.blaze3d.platform.InputConstants;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 
 public class ColorHitboxClient implements ClientModInitializer {
 
     static boolean show = false;
     static int colorIndex = 0;
     static final int[][] COLORS = {
-        {255, 0, 0},    // красный
-        {0, 255, 0},    // зелёный
-        {0, 0, 255},    // синий
-        {255, 255, 0},  // жёлтый
-        {255, 0, 255},  // фиолетовый
+        {255, 0, 0},
+        {0, 255, 0},
+        {0, 0, 255},
+        {255, 255, 0},
+        {255, 0, 255},
     };
 
     @Override
     public void onInitializeClient() {
+        KeyMapping.Category category = KeyMapping.Category.register(
+            "key.category.colorhitbox.main", 1000);
+
         KeyMapping keyShow = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.colorhitbox.toggle", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_H, "key.category.colorhitbox.main"));
+            GLFW.GLFW_KEY_H, category));
 
         KeyMapping keyColor = KeyBindingHelper.registerKeyBinding(new KeyMapping(
             "key.colorhitbox.color", InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_J, "key.category.colorhitbox.main"));
+            GLFW.GLFW_KEY_J, category));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (keyShow.consumeClick()) show = !show;
@@ -46,37 +48,37 @@ public class ColorHitboxClient implements ClientModInitializer {
 
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (!show) return;
-            MinecraftClient mc = MinecraftClient.getInstance();
-            if (mc.world == null) return;
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.level == null) return;
 
             int[] c = COLORS[colorIndex];
             float r = c[0] / 255f, g = c[1] / 255f, b = c[2] / 255f;
 
-            var matrices = context.matrixStack();
-            var consumers = context.consumers();
+            PoseStack matrices = context.matrixStack();
+            MultiBufferSource consumers = context.consumers();
             if (consumers == null) return;
 
-            var cam = mc.gameRenderer.getCamera().getPos();
+            var cam = mc.gameRenderer.getMainCamera().getPosition();
 
-            for (PlayerEntity player : mc.world.getPlayers()) {
+            for (Player player : mc.level.players()) {
                 if (player == mc.player) continue;
-                Box box = player.getBoundingBox();
-                matrices.push();
+                AABB box = player.getBoundingBox();
+                matrices.pushPose();
                 matrices.translate(
                     box.minX - cam.x, box.minY - cam.y, box.minZ - cam.z);
 
-                double dx = box.maxX - box.minX;
-                double dy = box.maxY - box.minY;
-                double dz = box.maxZ - box.minZ;
+                float dx = (float)(box.maxX - box.minX);
+                float dy = (float)(box.maxY - box.minY);
+                float dz = (float)(box.maxZ - box.minZ);
 
-                VertexConsumer vc = consumers.getBuffer(RenderLayer.LINES);
-                drawBox(matrices, vc, (float)dx, (float)dy, (float)dz, r, g, b);
-                matrices.pop();
+                VertexConsumer vc = consumers.getBuffer(RenderType.lines());
+                drawBox(matrices, vc, dx, dy, dz, r, g, b);
+                matrices.popPose();
             }
         });
     }
 
-    static void drawBox(MatrixStack m, VertexConsumer vc,
+    static void drawBox(PoseStack m, VertexConsumer vc,
                         float dx, float dy, float dz,
                         float r, float g, float b) {
         float[][] verts = {
