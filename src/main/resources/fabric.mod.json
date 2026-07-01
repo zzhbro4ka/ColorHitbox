@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "name": "ColorHitbox",
   "environment": "client",
-  "entrypoints": { ["mixins.colorhitbox.json"]
+  "entrypoints": {
     "client": ["com.colorhitbox.client.ColorHitboxClient"]
   },
+  "mixins": ["mixins.colorhitbox.json"],
   "depends": {
     "fabricloader": ">=0.18.0",
     "minecraft": "1.21.11",
